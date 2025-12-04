@@ -1,12 +1,18 @@
-use adventofcode25::{example_path, input_path, read_lines};
+use adventofcode25::{input_path, read_lines};
+
+const DAY: u8 = 3;
 
 fn main() {
-    let example = example_path(3);
-    println!("Example Part 1: {}", run(&example, 2));
-    println!("Example Part 2: {}", run(&example, 12));
-    let input = input_path(3);
-    println!("Part 1: {}", run(&input, 2));
-    println!("Part 2: {}", run(&input, 12));
+    run_part1(&input_path(DAY));
+    run_part2(&input_path(DAY));
+}
+
+fn run_part1(input: &str) {
+    println!("Part 1: {}", run(input, 2));
+}
+
+fn run_part2(input: &str) {
+    println!("Part 2: {}", run(input, 12));
 }
 
 fn run(input: &str, digit_count: usize) -> u64 {
@@ -51,4 +57,70 @@ fn highest_in_slice(slice: &[u8]) -> Option<(u8, usize)> {
         }
     }
     max_idx.map(|idx| (max_digit, idx))
+}
+
+// --- O(n) stack-based solution ---
+
+#[allow(dead_code)]
+fn run_stack(input: &str, digit_count: usize) -> u64 {
+    let mut sum = 0u64;
+    if let Ok(lines) = read_lines(input) {
+        for line in lines.map_while(Result::ok) {
+            let digits: Vec<u8> = line
+                .chars()
+                .filter_map(|c| c.to_digit(10).map(|d| d as u8))
+                .collect();
+
+            let found = find_highest_digits_stack(&digits, digit_count);
+            sum += found.iter().fold(0u64, |acc, &d| acc * 10 + d as u64);
+        }
+    }
+    sum
+}
+
+/// O(n) solution using monotonic stack.
+/// Instead of repeatedly finding max in windows, we greedily remove
+/// (n - k) digits that would make the result smaller.
+#[allow(dead_code)]
+fn find_highest_digits_stack(digits: &[u8], count: usize) -> Vec<u8> {
+    let to_remove = digits.len() - count;
+    let mut stack: Vec<u8> = Vec::with_capacity(digits.len());
+    let mut removed = 0;
+
+    for &d in digits {
+        while removed < to_remove && !stack.is_empty() && *stack.last().unwrap() < d {
+            stack.pop();
+            removed += 1;
+        }
+        stack.push(d);
+    }
+
+    stack.truncate(count);
+    stack
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use adventofcode25::example_path;
+
+    #[test]
+    fn part1_example() {
+        run_part1(&example_path(DAY));
+    }
+
+    #[test]
+    fn part1_real() {
+        run_part1(&input_path(DAY));
+    }
+
+    #[test]
+    fn part2_example() {
+        run_part2(&example_path(DAY));
+    }
+
+    #[test]
+    fn part2_real() {
+        run_part2(&input_path(DAY));
+    }
 }

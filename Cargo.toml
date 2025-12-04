@@ -19,5 +19,9 @@ path = "days/day03/main.rs"
 name = "day04"
 path = "days/day04/main.rs"
 
+[[bin]]
+name = "new_day"
+path = "src/bin/new_day.rs"
+
 [dependencies]
 regex = "1.12.2"

@@ -1,26 +1,13 @@
-use adventofcode25::{example_path, input_path, read_lines};
+use adventofcode25::{input_path, read_lines};
+
+const DAY: u8 = 2;
 
 fn main() {
-    part2();
+    run_part1(&input_path(DAY));
+    run_part2(&input_path(DAY));
 }
 
-fn example_part1() {
-    run_part1(example_path(2));
-}
-
-fn part1() {
-    run_part1(input_path(2));
-}
-
-fn example_part2() {
-    run_part2(example_path(2));
-}
-
-fn part2() {
-    run_part2(input_path(2));
-}
-
-fn run_part1(input: String) {
+fn run_part1(input: &str) {
     let mut sum: u64 = 0;
     if let Ok(lines) = read_lines(&input) {
         for line in lines.map_while(Result::ok) {
@@ -42,9 +29,9 @@ fn run_part1(input: String) {
     println!("Sum: {}", sum);
 }
 
-fn run_part2(input: String) {
+fn run_part2(input: &str) {
     let mut sum = 0;
-    if let Ok(lines) = read_lines(&input) {
+    if let Ok(lines) = read_lines(input) {
         for line in lines.map_while(Result::ok) {
             for range in line.split(',') {
                 let bounds: Vec<&str> = range.split('-').collect();
@@ -55,7 +42,6 @@ fn run_part2(input: String) {
                     let middle_index = number_as_string.len() / 2;
                     for i in 1..=middle_index {
                         if (number_as_string.len() % i) != 0 {
-                            // Not divisible
                             continue;
                         }
                         let possible_slices = number_as_string.len() / i;
@@ -79,4 +65,30 @@ fn run_part2(input: String) {
         }
     }
     println!("Sum: {}", sum);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use adventofcode25::example_path;
+
+    #[test]
+    fn part1_example() {
+        run_part1(&example_path(DAY));
+    }
+
+    #[test]
+    fn part1_real() {
+        run_part1(&input_path(DAY));
+    }
+
+    #[test]
+    fn part2_example() {
+        run_part2(&example_path(DAY));
+    }
+
+    #[test]
+    fn part2_real() {
+        run_part2(&input_path(DAY));
+    }
 }
