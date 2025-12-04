@@ -1,26 +1,13 @@
-use adventofcode25::{example_path, input_path, read_lines};
+use adventofcode25::{input_path, read_lines};
+
+const DAY: u8 = 4;
 
 fn main() {
-    part2();
+    run_part1(&input_path(DAY));
+    run_part2(&input_path(DAY));
 }
 
-fn example_part1() {
-    run_part1(example_path(4));
-}
-
-fn part1() {
-    run_part1(input_path(4));
-}
-
-fn example_part2() {
-    run_part2(example_path(4));
-}
-
-fn part2() {
-    run_part2(input_path(4));
-}
-
-fn run_part1(input: String) {
+fn run_part1(input: &str) {
     let mut grid: Vec<Vec<u8>> = Vec::new();
     if let Ok(lines) = read_lines(&input) {
         for line in lines.map_while(Result::ok) {
@@ -83,9 +70,9 @@ fn check_position(
     true
 }
 
-fn run_part2(input: String) {
+fn run_part2(input: &str) {
     let mut grid: Vec<Vec<u8>> = Vec::new();
-    if let Ok(lines) = read_lines(&input) {
+    if let Ok(lines) = read_lines(input) {
         for line in lines.map_while(Result::ok) {
             let row = line
                 .chars()
@@ -103,11 +90,36 @@ fn run_part2(input: String) {
             grid[*row][*col] = 0;
         }
         let found_positions = positions.len();
-        println!("Found positions: {}", found_positions);
         sum += found_positions;
         if found_positions == 0 {
             find_more_positions = false;
         }
     }
     println!("Sum: {}", sum);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use adventofcode25::example_path;
+
+    #[test]
+    fn part1_example() {
+        run_part1(&example_path(DAY));
+    }
+
+    #[test]
+    fn part1_real() {
+        run_part1(&input_path(DAY));
+    }
+
+    #[test]
+    fn part2_example() {
+        run_part2(&example_path(DAY));
+    }
+
+    #[test]
+    fn part2_real() {
+        run_part2(&input_path(DAY));
+    }
 }

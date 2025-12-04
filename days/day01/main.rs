@@ -1,28 +1,16 @@
-use adventofcode25::{example_path, input_path, read_lines};
+use adventofcode25::{input_path, read_lines};
 use regex::Regex;
 
+const DAY: u8 = 1;
+const INITIAL_VALUE: i32 = 50;
+
 fn main() {
-    part2();
+    run_part1(&input_path(DAY));
+    run_part2(&input_path(DAY));
 }
 
-fn example_part1() {
-    run_part1(example_path(1), 50);
-}
-
-fn part1() {
-    run_part1(input_path(1), 50);
-}
-
-fn example_part2() {
-    run_part2(example_path(1), 50);
-}
-
-fn part2() {
-    run_part2(input_path(1), 50);
-}
-
-fn run_part1(input: String, inital_value: i32) {
-    let mut value = inital_value;
+fn run_part1(input: &str) {
+    let mut value = INITIAL_VALUE;
     let regex = Regex::new(r"([LR])(\d+)").unwrap();
     let mut count = 0;
     if let Ok(lines) = read_lines(&input) {
@@ -49,8 +37,8 @@ fn run_part1(input: String, inital_value: i32) {
     println!("Count: {}", count);
 }
 
-fn run_part2(input: String, inital_value: i32) {
-    let mut value = inital_value;
+fn run_part2(input: &str) {
+    let mut value = INITIAL_VALUE;
     let regex = Regex::new(r"([LR])(\d+)").unwrap();
     let mut count = 0;
     if let Ok(lines) = read_lines(&input) {
@@ -81,4 +69,30 @@ fn run_part2(input: String, inital_value: i32) {
         }
     }
     println!("Count: {}", count);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use adventofcode25::example_path;
+
+    #[test]
+    fn part1_example() {
+        run_part1(&example_path(DAY));
+    }
+
+    #[test]
+    fn part1_real() {
+        run_part1(&input_path(DAY));
+    }
+
+    #[test]
+    fn part2_example() {
+        run_part2(&example_path(DAY));
+    }
+
+    #[test]
+    fn part2_real() {
+        run_part2(&input_path(DAY));
+    }
 }
