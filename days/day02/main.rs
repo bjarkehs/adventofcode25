@@ -3,11 +3,11 @@ use adventofcode25::{input_path, read_lines};
 const DAY: u8 = 2;
 
 fn main() {
-    run_part1(&input_path(DAY));
-    run_part2(&input_path(DAY));
+    solve_part1(&input_path(DAY));
+    solve_part2(&input_path(DAY));
 }
 
-fn run_part1(input: &str) {
+fn solve_part1(input: &str) -> u64 {
     let mut sum: u64 = 0;
     if let Ok(lines) = read_lines(&input) {
         for line in lines.map_while(Result::ok) {
@@ -26,11 +26,12 @@ fn run_part1(input: &str) {
             }
         }
     }
-    println!("Sum: {}", sum);
+    println!("Part 1: {}", sum);
+    sum
 }
 
-fn run_part2(input: &str) {
-    let mut sum = 0;
+fn solve_part2(input: &str) -> u64 {
+    let mut sum: u64 = 0;
     if let Ok(lines) = read_lines(input) {
         for line in lines.map_while(Result::ok) {
             for range in line.split(',') {
@@ -64,7 +65,8 @@ fn run_part2(input: &str) {
             }
         }
     }
-    println!("Sum: {}", sum);
+    println!("Part 2: {}", sum);
+    sum
 }
 
 #[cfg(test)]
@@ -74,21 +76,21 @@ mod tests {
 
     #[test]
     fn part1_example() {
-        run_part1(&example_path(DAY));
+        assert_eq!(solve_part1(&example_path(DAY)), 1227775554);
     }
 
     #[test]
     fn part1_real() {
-        run_part1(&input_path(DAY));
+        solve_part1(&input_path(DAY));
     }
 
     #[test]
     fn part2_example() {
-        run_part2(&example_path(DAY));
+        assert_eq!(solve_part2(&example_path(DAY)), 4174379265);
     }
 
     #[test]
     fn part2_real() {
-        run_part2(&input_path(DAY));
+        solve_part2(&input_path(DAY));
     }
 }

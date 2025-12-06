@@ -5,11 +5,11 @@ const DAY: u8 = 1;
 const INITIAL_VALUE: i32 = 50;
 
 fn main() {
-    run_part1(&input_path(DAY));
-    run_part2(&input_path(DAY));
+    solve_part1(&input_path(DAY));
+    solve_part2(&input_path(DAY));
 }
 
-fn run_part1(input: &str) {
+fn solve_part1(input: &str) -> i32 {
     let mut value = INITIAL_VALUE;
     let regex = Regex::new(r"([LR])(\d+)").unwrap();
     let mut count = 0;
@@ -34,10 +34,11 @@ fn run_part1(input: &str) {
             }
         }
     }
-    println!("Count: {}", count);
+    println!("Part 1: {}", count);
+    count
 }
 
-fn run_part2(input: &str) {
+fn solve_part2(input: &str) -> i32 {
     let mut value = INITIAL_VALUE;
     let regex = Regex::new(r"([LR])(\d+)").unwrap();
     let mut count = 0;
@@ -68,7 +69,8 @@ fn run_part2(input: &str) {
             }
         }
     }
-    println!("Count: {}", count);
+    println!("Part 2: {}", count);
+    count
 }
 
 #[cfg(test)]
@@ -78,21 +80,21 @@ mod tests {
 
     #[test]
     fn part1_example() {
-        run_part1(&example_path(DAY));
+        assert_eq!(solve_part1(&example_path(DAY)), 3);
     }
 
     #[test]
     fn part1_real() {
-        run_part1(&input_path(DAY));
+        solve_part1(&input_path(DAY));
     }
 
     #[test]
     fn part2_example() {
-        run_part2(&example_path(DAY));
+        assert_eq!(solve_part2(&example_path(DAY)), 6);
     }
 
     #[test]
     fn part2_real() {
-        run_part2(&input_path(DAY));
+        solve_part2(&input_path(DAY));
     }
 }

@@ -3,11 +3,11 @@ use adventofcode25::{input_path, read_lines};
 const DAY: u8 = 4;
 
 fn main() {
-    run_part1(&input_path(DAY));
-    run_part2(&input_path(DAY));
+    solve_part1(&input_path(DAY));
+    solve_part2(&input_path(DAY));
 }
 
-fn run_part1(input: &str) {
+fn solve_part1(input: &str) -> usize {
     let mut grid: Vec<Vec<u8>> = Vec::new();
     if let Ok(lines) = read_lines(&input) {
         for line in lines.map_while(Result::ok) {
@@ -20,8 +20,9 @@ fn run_part1(input: &str) {
     }
 
     let positions = find_positions(&grid, 3);
-    let sum = positions.len();
-    println!("Sum: {}", sum);
+    let result = positions.len();
+    println!("Part 1: {}", result);
+    result
 }
 
 fn find_positions(grid: &Vec<Vec<u8>>, max_surrounding: u8) -> Vec<(usize, usize)> {
@@ -70,7 +71,7 @@ fn check_position(
     true
 }
 
-fn run_part2(input: &str) {
+fn solve_part2(input: &str) -> usize {
     let mut grid: Vec<Vec<u8>> = Vec::new();
     if let Ok(lines) = read_lines(input) {
         for line in lines.map_while(Result::ok) {
@@ -83,19 +84,20 @@ fn run_part2(input: &str) {
     }
 
     let mut find_more_positions = true;
-    let mut sum = 0;
+    let mut result = 0;
     while find_more_positions {
         let positions = find_positions(&grid, 3);
         for (row, col) in &positions {
             grid[*row][*col] = 0;
         }
         let found_positions = positions.len();
-        sum += found_positions;
+        result += found_positions;
         if found_positions == 0 {
             find_more_positions = false;
         }
     }
-    println!("Sum: {}", sum);
+    println!("Part 2: {}", result);
+    result
 }
 
 #[cfg(test)]
@@ -105,21 +107,21 @@ mod tests {
 
     #[test]
     fn part1_example() {
-        run_part1(&example_path(DAY));
+        assert_eq!(solve_part1(&example_path(DAY)), 13);
     }
 
     #[test]
     fn part1_real() {
-        run_part1(&input_path(DAY));
+        solve_part1(&input_path(DAY));
     }
 
     #[test]
     fn part2_example() {
-        run_part2(&example_path(DAY));
+        assert_eq!(solve_part2(&example_path(DAY)), 43);
     }
 
     #[test]
     fn part2_real() {
-        run_part2(&input_path(DAY));
+        solve_part2(&input_path(DAY));
     }
 }

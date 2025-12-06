@@ -5,11 +5,11 @@ use adventofcode25::{input_path, read_lines};
 const DAY: u8 = 5;
 
 fn main() {
-    run_part1(&input_path(DAY));
-    run_part2(&input_path(DAY));
+    solve_part1(&input_path(DAY));
+    solve_part2(&input_path(DAY));
 }
 
-fn run_part1(input: &str) {
+fn solve_part1(input: &str) -> u32 {
     let mut ranges: Vec<(u64, u64)> = Vec::new();
     let mut available_ingredients: Vec<u64> = Vec::new();
     if let Ok(lines) = read_lines(input) {
@@ -30,10 +30,9 @@ fn run_part1(input: &str) {
             }
         }
     }
-    println!(
-        "Part 1: {}",
-        count_fresh_ingredients(&ranges, &available_ingredients)
-    );
+    let result = count_fresh_ingredients(&ranges, &available_ingredients);
+    println!("Part 1: {}", result);
+    result
 }
 
 fn count_fresh_ingredients(ranges: &Vec<(u64, u64)>, available_ingredients: &Vec<u64>) -> u32 {
@@ -49,7 +48,7 @@ fn count_fresh_ingredients(ranges: &Vec<(u64, u64)>, available_ingredients: &Vec
     count
 }
 
-fn run_part2(input: &str) {
+fn solve_part2(input: &str) -> u64 {
     let mut ranges: Vec<(u64, u64)> = Vec::new();
     if let Ok(lines) = read_lines(input) {
         for line in lines.map_while(Result::ok) {
@@ -63,7 +62,9 @@ fn run_part2(input: &str) {
             ranges.push((start, end));
         }
     }
-    println!("Part 2: {}", count_all_fresh_ingredients(&ranges));
+    let result = count_all_fresh_ingredients(&ranges);
+    println!("Part 2: {}", result);
+    result
 }
 
 fn count_all_fresh_ingredients(ranges: &Vec<(u64, u64)>) -> u64 {
@@ -103,21 +104,21 @@ mod tests {
 
     #[test]
     fn part1_example() {
-        run_part1(&example_path(DAY));
+        assert_eq!(solve_part1(&example_path(DAY)), 3);
     }
 
     #[test]
     fn part1_real() {
-        run_part1(&input_path(DAY));
+        solve_part1(&input_path(DAY));
     }
 
     #[test]
     fn part2_example() {
-        run_part2(&example_path(DAY));
+        assert_eq!(solve_part2(&example_path(DAY)), 14);
     }
 
     #[test]
     fn part2_real() {
-        run_part2(&input_path(DAY));
+        solve_part2(&input_path(DAY));
     }
 }

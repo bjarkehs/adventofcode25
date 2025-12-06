@@ -3,16 +3,20 @@ use adventofcode25::{input_path, read_lines};
 const DAY: u8 = 3;
 
 fn main() {
-    run_part1(&input_path(DAY));
-    run_part2(&input_path(DAY));
+    solve_part1(&input_path(DAY));
+    solve_part2(&input_path(DAY));
 }
 
-fn run_part1(input: &str) {
-    println!("Part 1: {}", run(input, 2));
+fn solve_part1(input: &str) -> u64 {
+    let result = run(input, 2);
+    println!("Part 1: {}", result);
+    result
 }
 
-fn run_part2(input: &str) {
-    println!("Part 2: {}", run(input, 12));
+fn solve_part2(input: &str) -> u64 {
+    let result = run(input, 12);
+    println!("Part 2: {}", result);
+    result
 }
 
 fn run(input: &str, digit_count: usize) -> u64 {
@@ -106,21 +110,21 @@ mod tests {
 
     #[test]
     fn part1_example() {
-        run_part1(&example_path(DAY));
+        assert_eq!(solve_part1(&example_path(DAY)), 357);
     }
 
     #[test]
     fn part1_real() {
-        run_part1(&input_path(DAY));
+        solve_part1(&input_path(DAY));
     }
 
     #[test]
     fn part2_example() {
-        run_part2(&example_path(DAY));
+        assert_eq!(solve_part2(&example_path(DAY)), 3121910778619);
     }
 
     #[test]
     fn part2_real() {
-        run_part2(&input_path(DAY));
+        solve_part2(&input_path(DAY));
     }
 }
