@@ -3,119 +3,137 @@ use adventofcode25::{input_path, read_lines};
 const DAY: u8 = 6;
 
 fn main() {
-    run_part1(&input_path(DAY));
-    run_part2(&input_path(DAY));
+    let input = parse_input(&input_path(DAY));
+    solve_part1(&input);
+    solve_part2(&input);
 }
 
+#[derive(Clone, Copy)]
 enum Operator {
     Add,
     Multiply,
 }
 
-struct Problem {
-    values: Vec<u64>,
-    operator: Operator,
+impl Operator {
+    fn from_char(c: char) -> Self {
+        match c {
+            '+' => Self::Add,
+            '*' => Self::Multiply,
+            _ => panic!("Unknown operator: {c}"),
+        }
+    }
+
+    fn apply(self, values: impl Iterator<Item = u64>) -> u64 {
+        match self {
+            Self::Add => values.sum(),
+            Self::Multiply => values.product(),
+        }
+    }
 }
 
-fn run_part1(input: &str) {
-    let mut rows: Vec<Vec<String>> = Vec::new();
-    if let Ok(lines) = read_lines(input) {
-        for line in lines.map_while(Result::ok) {
-            let mut columns: Vec<String> = Vec::new();
-            for value in line.split_whitespace() {
-                columns.push(value.to_string());
+struct Input {
+    grid: Vec<Vec<char>>,
+    width: usize,
+    height: usize,
+}
+
+fn parse_input(path: &str) -> Input {
+    let lines = read_lines(path).expect("Failed to read input");
+    let grid: Vec<Vec<char>> = lines
+        .map_while(Result::ok)
+        .map(|line| line.chars().collect())
+        .collect();
+
+    let width = grid.iter().map(Vec::len).max().unwrap_or(0);
+    let height = grid.len();
+
+    Input {
+        grid,
+        width,
+        height,
+    }
+}
+
+fn find_problem_ranges(input: &Input) -> Vec<std::ops::Range<usize>> {
+    let mut ranges = Vec::new();
+    let mut start = None;
+
+    for col in 0..input.width {
+        let is_separator = (0..input.height).all(|row| {
+            input
+                .grid
+                .get(row)
+                .and_then(|r| r.get(col))
+                .is_none_or(|&c| c == ' ')
+        });
+
+        match (start, is_separator) {
+            (None, false) => start = Some(col),
+            (Some(s), true) => {
+                ranges.push(s..col);
+                start = None;
             }
-            rows.push(columns);
+            _ => {}
         }
     }
-
-    let problem_count = rows[0].len();
-    let operator_index = rows.len() - 1;
-    let mut problems: Vec<Problem> = Vec::with_capacity(problem_count);
-    for col in 0..problem_count {
-        let mut values: Vec<u64> = Vec::new();
-        for row in 0..operator_index {
-            let value: u64 = rows[row][col].parse().unwrap();
-            values.push(value);
-        }
-        let operator = rows[operator_index][col]
-            .chars()
-            .next()
-            .map(map_char_to_operator)
-            .unwrap();
-        problems.push(Problem { values, operator });
+    if let Some(s) = start {
+        ranges.push(s..input.width);
     }
-    let sum_of_results: u64 = problems.iter().map(solve_problem).sum();
-    println!("Part 1: {}", sum_of_results);
+    ranges
 }
 
-fn solve_problem(problem: &Problem) -> u64 {
-    match problem.operator {
-        Operator::Add => problem.values.iter().sum(),
-        Operator::Multiply => problem.values.iter().product(),
-    }
+fn solve_part1(input: &Input) -> u64 {
+    let ranges = find_problem_ranges(input);
+    let operator_row = input.height - 1;
+
+    let result = ranges
+        .iter()
+        .map(|range| {
+            let operator = Operator::from_char(input.grid[operator_row][range.start]);
+
+            let values = (0..operator_row).map(|row| {
+                let num_str: String = range
+                    .clone()
+                    .filter_map(|col| input.grid.get(row).and_then(|r| r.get(col)).copied())
+                    .filter(|&c| c != ' ')
+                    .collect();
+                num_str.parse::<u64>().unwrap()
+            });
+
+            operator.apply(values)
+        })
+        .sum();
+
+    println!("Part 1: {}", result);
+    result
 }
 
-fn map_char_to_operator(c: char) -> Operator {
-    match c {
-        '+' => Operator::Add,
-        '*' => Operator::Multiply,
-        _ => panic!("Unknown operator"),
-    }
-}
+fn solve_part2(input: &Input) -> u64 {
+    let ranges = find_problem_ranges(input);
+    let operator_row = input.height - 1;
 
-fn run_part2(input: &str) {
-    let mut problems: Vec<Problem> = Vec::new();
-    let mut column_widths: Vec<u8> = Vec::new();
-    if let Ok(lines) = read_lines(input) {
-        let all_lines: Vec<String> = lines.map_while(Result::ok).collect();
-        let mut current_index: usize = 0;
-        column_widths.push(1);
-        for char in all_lines[all_lines.len() - 1].chars().skip(1) {
-            if char != ' ' {
-                current_index += 1;
-                column_widths.push(1);
-                column_widths[current_index - 1] -= 1;
-            } else {
-                column_widths[current_index] += 1;
-            }
-        }
+    let result = ranges
+        .iter()
+        .map(|range| {
+            let operator = Operator::from_char(input.grid[operator_row][range.start]);
 
-        let mut index_offset = 0;
-        let amount_of_values = all_lines.len() - 1;
-        for &width in column_widths.iter() {
-            let mut value_lists: Vec<Vec<u64>> = vec![Vec::new(); width as usize];
-            for line in all_lines.iter().take(amount_of_values) {
-                let value_str = &line[index_offset..index_offset + width as usize]
-                    .chars()
-                    .rev();
-                for (char_index, c) in value_str.clone().into_iter().enumerate() {
-                    if c != ' ' {
-                        let value = c.to_digit(10).unwrap() as u64;
-                        value_lists[char_index].push(value);
-                    }
+            let values = range.clone().rev().filter_map(|col| {
+                let num_str: String = (0..operator_row)
+                    .filter_map(|row| input.grid.get(row).and_then(|r| r.get(col)).copied())
+                    .filter(|&c| c != ' ')
+                    .collect();
+                if num_str.is_empty() {
+                    None
+                } else {
+                    Some(num_str.parse::<u64>().unwrap())
                 }
-            }
+            });
 
-            let values = value_lists
-                .into_iter()
-                .map(|digits| digits.into_iter().fold(0u64, |acc, d| acc * 10 + d as u64))
-                .collect::<Vec<u64>>();
-
-            let operator = all_lines[all_lines.len() - 1]
-                .chars()
-                .nth(index_offset)
-                .map(map_char_to_operator)
-                .unwrap();
-
-            index_offset += width as usize + 1;
-
-            problems.push(Problem { values, operator });
-        }
-    }
-
-    let sum_of_results: u64 = problems.iter().map(solve_problem).sum();
-    println!("Part 2: {}", sum_of_results);
+            operator.apply(values)
+        })
+        .sum();
+    println!("Part 2: {}", result);
+    result
 }
 
 #[cfg(test)]
@@ -125,21 +143,23 @@ mod tests {
 
     #[test]
     fn part1_example() {
-        run_part1(&example_path(DAY));
+        let input = parse_input(&example_path(DAY));
+        assert_eq!(solve_part1(&input), 4277556);
     }
 
     #[test]
     fn part1_real() {
-        run_part1(&input_path(DAY));
+        parse_input(&input_path(DAY));
     }
 
     #[test]
     fn part2_example() {
-        run_part2(&example_path(DAY));
+        let input = parse_input(&example_path(DAY));
+        assert_eq!(solve_part2(&input), 3263827);
     }
 
     #[test]
     fn part2_real() {
-        run_part2(&input_path(DAY));
+        parse_input(&input_path(DAY));
     }
 }
