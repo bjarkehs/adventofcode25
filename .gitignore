@@ -31,3 +31,7 @@ target
 # already existing elements were commented out
 
 #/target
+
+# Advent of Code specific ignores
+**/input.txt
+**/example.txt
