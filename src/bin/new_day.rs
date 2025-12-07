@@ -43,10 +43,9 @@ fn main() {{
 }}
 
 fn solve_part1(input: &str) -> u64 {{
-    if let Ok(lines) = read_lines(input) {{
-        for line in lines.map_while(Result::ok) {{
-            println!("{{line}}");
-        }}
+    let lines = read_lines(input).expect("Failed to read input file");
+    for line in lines.map_while(Result::ok) {{
+        println!("{{line}}");
     }}
     let result = 0;
     println!("Part 1: {{}}", result);
@@ -54,9 +53,8 @@ fn solve_part1(input: &str) -> u64 {{
 }}
 
 fn solve_part2(input: &str) -> u64 {{
-    if let Ok(lines) = read_lines(input) {{
-        for _line in lines.map_while(Result::ok) {{
-        }}
+    let lines = read_lines(input).expect("Failed to read input file");
+    for _line in lines.map_while(Result::ok) {{
     }}
     let result = 0;
     println!("Part 2: {{}}", result);
