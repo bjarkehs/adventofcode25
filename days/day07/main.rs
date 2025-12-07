@@ -1,9 +1,9 @@
 use adventofcode25::{input_path, read_lines};
-use std::collections::HashMap;
-use std::collections::HashSet;
-use std::collections::VecDeque;
+use std::collections::{HashMap, HashSet, VecDeque};
 
 const DAY: u8 = 7;
+
+type Pos = (usize, usize);
 
 fn main() {
     let input = parse_input(&input_path(DAY));
@@ -34,72 +34,54 @@ fn parse_input(path: &str) -> Input {
     }
 }
 
-fn solve_part1(input: &Input) -> u64 {
-    let mut beam_deque: VecDeque<(usize, usize)> = VecDeque::new();
-    let initial_beam = input.grid[0]
+fn find_start(input: &Input) -> Pos {
+    input.grid[0]
         .iter()
-        .enumerate()
-        .filter_map(|(col, &c)| if c == 'S' { Some((0, col)) } else { None })
-        .collect::<Vec<(usize, usize)>>()
-        .first()
-        .unwrap()
-        .clone();
-    beam_deque.push_back(initial_beam);
+        .position(|&c| c == 'S')
+        .map(|col| (0, col))
+        .expect("No start position found")
+}
+
+fn solve_part1(input: &Input) -> u64 {
+    let mut beam_deque: VecDeque<Pos> = VecDeque::new();
+    beam_deque.push_back(find_start(input));
+
     let mut splits = 0u64;
-    let mut beam_positions: HashSet<(usize, usize)> = HashSet::new();
-    while !beam_deque.is_empty() {
-        let (row, column) = beam_deque.pop_front().unwrap();
-        if beam_positions.contains(&(row, column)) {
+    let mut visited: HashSet<Pos> = HashSet::new();
+
+    while let Some((row, col)) = beam_deque.pop_front() {
+        if !visited.insert((row, col)) {
             continue;
         }
-        beam_positions.insert((row, column));
         if row + 1 >= input.height {
             continue;
         }
-        let below = input.grid[row + 1][column];
-        if below == '^' {
-            // split beam
+        if input.grid[row + 1][col] == '^' {
             splits += 1;
-            // left beam
-            if column > 0 {
-                beam_deque.push_back((row, column - 1));
+            if col > 0 {
+                beam_deque.push_back((row, col - 1));
             }
-            // right beam
-            if column + 1 < input.width {
-                beam_deque.push_back((row, column + 1));
+            if col + 1 < input.width {
+                beam_deque.push_back((row, col + 1));
             }
-            continue;
         } else {
-            // continue downwards
-            beam_deque.push_back((row + 1, column));
+            beam_deque.push_back((row + 1, col));
         }
     }
-    println!("Part 1: {}", splits);
+    println!("Part 1: {splits}");
     splits
 }
 
 fn solve_part2(input: &Input) -> u64 {
-    let initial_beam = input.grid[0]
-        .iter()
-        .enumerate()
-        .filter_map(|(col, &c)| if c == 'S' { Some((0, col)) } else { None })
-        .collect::<Vec<(usize, usize)>>()
-        .first()
-        .unwrap()
-        .clone();
+    let (row, col) = find_start(input);
     let mut cache = HashMap::new();
-    let timelines = solve_timeline(input, initial_beam.0, initial_beam.1, &mut cache);
-    println!("Part 2: {}", timelines);
+    let timelines = count_timelines(input, row, col, &mut cache);
+    println!("Part 2: {timelines}");
     timelines
 }
 
-fn solve_timeline(
-    input: &Input,
-    row: usize,
-    column: usize,
-    cache: &mut HashMap<(usize, usize), u64>,
-) -> u64 {
-    if let Some(&cached) = cache.get(&(row, column)) {
+fn count_timelines(input: &Input, row: usize, col: usize, cache: &mut HashMap<Pos, u64>) -> u64 {
+    if let Some(&cached) = cache.get(&(row, col)) {
         return cached;
     }
 
@@ -107,16 +89,13 @@ fn solve_timeline(
         return 1;
     }
 
-    let below = input.grid[row + 1][column];
-
-    let mut timelines = 0u64;
-    if below == '^' {
-        timelines += solve_timeline(input, row, column - 1, cache);
-        timelines += solve_timeline(input, row, column + 1, cache);
+    let timelines = if input.grid[row + 1][col] == '^' {
+        count_timelines(input, row, col - 1, cache) + count_timelines(input, row, col + 1, cache)
     } else {
-        timelines = solve_timeline(input, row + 1, column, cache);
-    }
-    cache.insert((row, column), timelines);
+        count_timelines(input, row + 1, col, cache)
+    };
+
+    cache.insert((row, col), timelines);
     timelines
 }
 
