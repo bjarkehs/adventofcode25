@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use adventofcode25::{input_path, read_lines};
 
 const DAY: u8 = 5;
@@ -9,88 +7,76 @@ fn main() {
     solve_part2(&input_path(DAY));
 }
 
-fn solve_part1(input: &str) -> u32 {
-    let mut ranges: Vec<(u64, u64)> = Vec::new();
-    let mut available_ingredients: Vec<u64> = Vec::new();
-    if let Ok(lines) = read_lines(input) {
-        let mut scanning_fresh = true;
-        for line in lines.map_while(Result::ok) {
-            if line.is_empty() {
-                scanning_fresh = false;
-                continue;
-            }
-            if scanning_fresh {
-                let bounds: Vec<&str> = line.split('-').collect();
-                let start: u64 = bounds[0].parse().unwrap();
-                let end: u64 = bounds[1].parse().unwrap();
-                ranges.push((start, end));
-            } else {
-                let ingredient: u64 = line.parse().unwrap();
-                available_ingredients.push(ingredient);
-            }
+fn parse_input(input: &str) -> (Vec<(u64, u64)>, Vec<u64>) {
+    let mut ranges = Vec::new();
+    let mut ingredients = Vec::new();
+    let mut parsing_ranges = true;
+
+    let lines = read_lines(input).expect("Failed to read input file");
+    for line in lines.map_while(Result::ok) {
+        if line.is_empty() {
+            parsing_ranges = false;
+            continue;
+        }
+        if parsing_ranges {
+            let (start, end) = line.split_once('-').expect("Invalid range format");
+            ranges.push((start.parse().unwrap(), end.parse().unwrap()));
+        } else {
+            ingredients.push(line.parse().unwrap());
         }
     }
-    let result = count_fresh_ingredients(&ranges, &available_ingredients);
-    println!("Part 1: {}", result);
+    (ranges, ingredients)
+}
+
+fn solve_part1(input: &str) -> u32 {
+    let (mut ranges, ingredients) = parse_input(input);
+    ranges.sort_unstable();
+
+    let result = count_fresh_ingredients(&ranges, &ingredients);
+    println!("Part 1: {result}");
     result
 }
 
-fn count_fresh_ingredients(ranges: &Vec<(u64, u64)>, available_ingredients: &Vec<u64>) -> u32 {
-    let mut count = 0;
-    for &ingredient in available_ingredients {
-        for &(start, end) in ranges {
-            if ingredient >= start && ingredient <= end {
-                count += 1;
-                break;
-            }
-        }
-    }
-    count
+fn count_fresh_ingredients(sorted_ranges: &[(u64, u64)], ingredients: &[u64]) -> u32 {
+    ingredients
+        .iter()
+        .filter(|&&id| is_fresh(sorted_ranges, id))
+        .count() as u32
+}
+
+fn is_fresh(sorted_ranges: &[(u64, u64)], id: u64) -> bool {
+    sorted_ranges
+        .iter()
+        .any(|&(start, end)| start <= id && id <= end)
 }
 
 fn solve_part2(input: &str) -> u64 {
-    let mut ranges: Vec<(u64, u64)> = Vec::new();
-    if let Ok(lines) = read_lines(input) {
-        for line in lines.map_while(Result::ok) {
-            if line.is_empty() {
-                break;
-            }
-
-            let bounds: Vec<&str> = line.split('-').collect();
-            let start: u64 = bounds[0].parse().unwrap();
-            let end: u64 = bounds[1].parse().unwrap();
-            ranges.push((start, end));
-        }
-    }
-    let result = count_all_fresh_ingredients(&ranges);
-    println!("Part 2: {}", result);
+    let (ranges, _) = parse_input(input);
+    let result = count_all_fresh_ids(&ranges);
+    println!("Part 2: {result}");
     result
 }
 
-fn count_all_fresh_ingredients(ranges: &Vec<(u64, u64)>) -> u64 {
-    let mut points: Vec<(u64, i8)> = Vec::new();
+fn count_all_fresh_ids(ranges: &[(u64, u64)]) -> u64 {
+    let mut events: Vec<(u64, i8)> = Vec::with_capacity(ranges.len() * 2);
     for &(start, end) in ranges {
-        points.push((start, 1));
-        points.push((end, -1));
+        events.push((start, 1));
+        events.push((end + 1, -1));
     }
+    events.sort_unstable();
 
-    points.sort_by(|a, b| a.0.cmp(&b.0).then(b.1.cmp(&a.1)));
-
-    let mut in_range = 0i8;
+    let mut depth = 0i32;
     let mut range_start = 0u64;
     let mut count = 0u64;
-    for (value, in_range_change) in points.iter() {
-        in_range += *in_range_change;
 
-        if in_range_change == &1 {
-            if in_range == 1 {
-                range_start = *value;
-            }
-            continue;
-        }
+    for (pos, delta) in events {
+        let prev_depth = depth;
+        depth += delta as i32;
 
-        if in_range == 0 {
-            count += value - range_start + 1;
+        if prev_depth == 0 && depth > 0 {
+            range_start = pos;
+        } else if prev_depth > 0 && depth == 0 {
+            count += pos - range_start;
         }
     }
 
