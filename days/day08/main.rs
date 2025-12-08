@@ -6,8 +6,8 @@ const DAY: u8 = 8;
 
 fn main() {
     let points = parse_input(&input_path(DAY));
-    solve_part1(&points, 1000);
-    solve_part2(&points);
+    println!("Part 1: {}", solve_part1(&points, 1000));
+    println!("Part 2: {}", solve_part2(&points));
 }
 
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
@@ -24,135 +24,133 @@ impl Vector3 {
 }
 
 fn parse_input(input: &str) -> Vec<Vector3> {
-    let lines = read_lines(input).expect("Failed to read input file");
-    let mut points: Vec<Vector3> = Vec::new();
-    for line in lines.map_while(Result::ok) {
-        let coords: Vec<i64> = line.split(',').map(|s| s.parse().unwrap()).collect();
-        points.push(Vector3 {
-            x: coords[0],
-            y: coords[1],
-            z: coords[2],
-        });
-    }
-    points
+    read_lines(input)
+        .expect("Failed to read input file")
+        .map_while(Result::ok)
+        .map(|line| {
+            let coords: Vec<i64> = line.split(',').map(|s| s.parse().unwrap()).collect();
+            Vector3 {
+                x: coords[0],
+                y: coords[1],
+                z: coords[2],
+            }
+        })
+        .collect()
 }
 
-fn solve_part1(points: &Vec<Vector3>, max_connections: usize) -> u64 {
-    solve(points.clone(), 1, Some(max_connections))
-}
-
-fn distances_between_points(points: &Vec<Vector3>) -> HashMap<(Vector3, Vector3), i64> {
-    let mut distances: HashMap<(Vector3, Vector3), i64> = HashMap::new();
+fn compute_sorted_edges(points: &[Vector3]) -> Vec<(Vector3, Vector3, i64)> {
+    let mut edges = Vec::new();
     for i in 0..points.len() {
         for j in (i + 1)..points.len() {
             let dist = points[i].distance_squared_to(&points[j]);
-            distances.insert((points[i], points[j]), dist);
+            edges.push((points[i], points[j], dist));
+        }
+    }
+    edges.sort_unstable_by_key(|(_, _, dist)| *dist);
+    edges
+}
+
+struct UnionFind {
+    parent: HashMap<Vector3, Vector3>,
+    rank: HashMap<Vector3, usize>,
+    size: HashMap<Vector3, usize>,
+}
+
+impl UnionFind {
+    fn new(points: &[Vector3]) -> Self {
+        let mut parent = HashMap::new();
+        let mut size = HashMap::new();
+        for &p in points {
+            parent.insert(p, p);
+            size.insert(p, 1);
+        }
+        Self {
+            parent,
+            rank: HashMap::new(),
+            size,
         }
     }
 
-    distances
-}
-
-fn solve_part2(points: &Vec<Vector3>) -> u64 {
-    solve(points.clone(), 2, None)
-}
-
-fn find_parent(cluster_map: &mut HashMap<Vector3, Vector3>, point: &Vector3) -> Vector3 {
-    let parent = cluster_map.get(point).cloned().unwrap_or(*point);
-    if &parent != point {
-        let grandparent = find_parent(cluster_map, &parent);
-        cluster_map.insert(*point, grandparent);
-        grandparent
-    } else {
-        parent
-    }
-}
-
-fn union_clusters(
-    cluster_map: &mut HashMap<Vector3, Vector3>,
-    rank_map: &mut HashMap<Vector3, usize>,
-    point1: &Vector3,
-    point2: &Vector3,
-) {
-    let parent1 = find_parent(cluster_map, point1);
-    let parent2 = find_parent(cluster_map, point2);
-
-    if parent1 == parent2 {
-        return;
+    fn find(&mut self, point: Vector3) -> Vector3 {
+        let p = *self.parent.get(&point).unwrap();
+        if p != point {
+            let root = self.find(p);
+            self.parent.insert(point, root);
+            root
+        } else {
+            point
+        }
     }
 
-    let rank1 = rank_map.get(&parent1).cloned().unwrap_or(0);
-    let rank2 = rank_map.get(&parent2).cloned().unwrap_or(0);
+    fn union(&mut self, p1: Vector3, p2: Vector3) -> bool {
+        let root1 = self.find(p1);
+        let root2 = self.find(p2);
 
-    if rank1 < rank2 {
-        cluster_map.insert(parent1, parent2);
-    } else if rank1 > rank2 {
-        cluster_map.insert(parent2, parent1);
-    } else {
-        cluster_map.insert(parent2, parent1);
-        let rank = rank_map.entry(parent1).or_insert(0);
-        *rank += 1;
+        if root1 == root2 {
+            return false;
+        }
+
+        let rank1 = *self.rank.get(&root1).unwrap_or(&0);
+        let rank2 = *self.rank.get(&root2).unwrap_or(&0);
+        let size1 = *self.size.get(&root1).unwrap();
+        let size2 = *self.size.get(&root2).unwrap();
+
+        let (new_root, old_root) = if rank1 < rank2 {
+            (root2, root1)
+        } else {
+            if rank1 == rank2 {
+                *self.rank.entry(root1).or_insert(0) += 1;
+            }
+            (root1, root2)
+        };
+
+        self.parent.insert(old_root, new_root);
+        self.size.insert(new_root, size1 + size2);
+        true
     }
-}
 
-fn solve(points: Vec<Vector3>, part: u8, max_connections: Option<usize>) -> u64 {
-    let distances = distances_between_points(&points);
-    let mut cluster_map: HashMap<Vector3, Vector3> = HashMap::new();
-    let mut rank_map: HashMap<Vector3, usize> = HashMap::new();
-    let mut cluster_sizes: HashMap<Vector3, usize> = HashMap::new();
-
-    for point in &points {
-        cluster_map.insert(*point, *point);
-        rank_map.insert(*point, 0);
-        cluster_sizes.insert(*point, 1);
+    fn get_size(&mut self, point: Vector3) -> usize {
+        let root = self.find(point);
+        *self.size.get(&root).unwrap()
     }
 
-    let mut edges: Vec<(&(Vector3, Vector3), &i64)> = distances.iter().collect();
-    edges.sort_unstable_by(|a, b| a.1.cmp(b.1));
-
-    for (i, ((p1, p2), _)) in edges.iter().enumerate() {
-        let root1 = find_parent(&mut cluster_map, p1);
-        let root2 = find_parent(&mut cluster_map, p2);
-
-        if root1 != root2 {
-            union_clusters(&mut cluster_map, &mut rank_map, p1, p2);
-            let new_root = find_parent(&mut cluster_map, p1);
-            cluster_sizes.insert(
-                new_root,
-                cluster_sizes.get(&root1).unwrap_or(&0) + cluster_sizes.get(&root2).unwrap_or(&0),
-            );
-
-            if part == 2 {
-                let size = cluster_sizes.get(&new_root).unwrap_or(&0);
-                if *size == points.len() {
-                    let result = (p1.x * p2.x) as u64;
-                    println!("Part 2: {result}");
-                    return result;
+    fn get_circuit_sizes(&mut self, points: &[Vector3]) -> Vec<usize> {
+        points
+            .iter()
+            .filter_map(|&p| {
+                let root = self.find(p);
+                if root == p {
+                    Some(*self.size.get(&root).unwrap())
+                } else {
+                    None
                 }
-            }
+            })
+            .collect()
+    }
+}
 
-            if let Some(max) = max_connections {
-                if i + 1 >= max {
-                    break;
-                }
-            }
-        }
+fn solve_part1(points: &[Vector3], max_connections: usize) -> u64 {
+    let edges = compute_sorted_edges(points);
+    let mut uf = UnionFind::new(points);
+
+    for (p1, p2, _) in edges.iter().take(max_connections) {
+        uf.union(*p1, *p2);
     }
 
-    if part == 1 {
-        let mut final_sizes: Vec<usize> = Vec::new();
-        for point in &points {
-            let root = find_parent(&mut cluster_map, point);
-            if root == *point {
-                final_sizes.push(*cluster_sizes.get(&root).unwrap_or(&0));
-            }
-        }
-        final_sizes.sort_unstable_by(|a, b| b.cmp(a));
-        let result: usize = final_sizes.iter().take(3).product();
-        println!("Part 1: {result}");
-        return result as u64;
-    }
+    let mut sizes = uf.get_circuit_sizes(points);
+    sizes.sort_unstable_by(|a, b| b.cmp(a));
+    sizes.iter().take(3).product::<usize>() as u64
+}
 
+fn solve_part2(points: &[Vector3]) -> u64 {
+    let edges = compute_sorted_edges(points);
+    let mut uf = UnionFind::new(points);
+
+    for (p1, p2, _) in &edges {
+        if uf.union(*p1, *p2) && uf.get_size(*p1) == points.len() {
+            return (p1.x * p2.x) as u64;
+        }
+    }
     0
 }
 
