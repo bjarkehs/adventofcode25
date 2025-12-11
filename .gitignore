@@ -34,4 +34,4 @@ target
 
 # Advent of Code specific ignores
 **/input.txt
-**/example.txt
+**/example*.txt

@@ -17,3 +17,7 @@ pub fn input_path(day: u8) -> String {
 pub fn example_path(day: u8) -> String {
     format!("days/day{:02}/example.txt", day)
 }
+
+pub fn example_path_n(day: u8, n: u8) -> String {
+    format!("days/day{:02}/example_{}.txt", day, n)
+}
